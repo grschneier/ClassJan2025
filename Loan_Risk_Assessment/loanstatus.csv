@@ -1,0 +1,7 @@
+"loan_status_code","loan_status"
+"C","Current"
+"D","Late (31-120 days)"
+"G","In Grace Period"
+"I","Issued"
+"L","Late (16-30 days)"
+"P","Fully Paid"
