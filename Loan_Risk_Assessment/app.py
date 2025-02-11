@@ -21,6 +21,9 @@ merged_df = merged_df.merge(loan_status_df, left_on='loan_status_code_y', right_
 # Drop duplicate columns if they exist
 merged_df = merged_df.loc[:, ~merged_df.columns.duplicated()]
 
+# Remove faulty employment length values over 50
+merged_df = merged_df[merged_df['emp_length'] <= 50]
+
 # Streamlit App Title
 st.title("📊 Loan Data Dashboard")
 
@@ -49,7 +52,7 @@ st.plotly_chart(delinquency_fig)
 
 # Loan Amount by Employment Length
 st.subheader("Loan Amount by Employment Length")
-emp_length_fig = px.scatter(merged_df.dropna(subset=['emp_length', 'loan_amnt']), 
+emp_length_fig = px.box(merged_df.dropna(subset=['emp_length', 'loan_amnt']), 
                         x='emp_length', 
                         y='loan_amnt',
                         title="Loan Amount Distribution by Employment Length")
