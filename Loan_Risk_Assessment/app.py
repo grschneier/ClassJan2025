@@ -46,16 +46,19 @@ st.plotly_chart(delinquency_fig)
 
 # Loan Amount by Employment Length
 st.subheader("Loan Amount by Employment Length")
-emp_length_fig = px.box(merged_df.dropna(subset=['emp_length']), x='emp_length', y='loan_amnt',
-                        title="Loan Amount Distribution by Employment Length")
-st.plotly_chart(emp_length_fig)
+if 'emp_length' in merged_df.columns and 'loan_amnt' in merged_df.columns:
+    emp_length_fig = px.box(merged_df.dropna(subset=['emp_length', 'loan_amnt']), x='emp_length', y='loan_amnt',
+                            title="Loan Amount Distribution by Employment Length")
+    st.plotly_chart(emp_length_fig)
+else:
+    st.warning("Employment length or loan amount data is missing.")
 
 # State-wise Loan Amount Map
 st.subheader("State-wise Loan Amount Map")
 state_loan_data = merged_df.groupby('addr_state', as_index=False)['loan_amnt'].sum()
 
 # Load GeoJSON file
-geojson_path = "Loan_Risk_Assessment/us-states.json"
+geojson_path = "us-states.json"
 with open(geojson_path, "r") as f:
     state_geo = json.load(f)
 
