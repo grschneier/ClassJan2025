@@ -11,7 +11,10 @@ loan_df = pd.read_csv("Loan_Risk_Assessment/loandata.csv")
 loan_reason_df = pd.read_csv("Loan_Risk_Assessment/loanreason.csv")
 loan_status_df = pd.read_csv("Loan_Risk_Assessment/loanstatus.csv")
 employment_df = pd.read_csv("Loan_Risk_Assessment/employmentlength.csv")
-
+if 'loan_status_code' in loan_df.columns and 'loan_status_code' in loan_status_df.columns:
+    merged_df = loan_df.merge(loan_status_df, on='loan_status_code', how='left')
+else:
+    st.error("Column 'loan_status_code' not found in one or both datasets.")
 # Merge necessary dataframes
 merged_df = customer_df.merge(loan_df, on='loan_id', how='inner')
 merged_df = merged_df.merge(loan_reason_df, left_on='reason_code', right_on='reasoncode', how='left')
