@@ -16,6 +16,7 @@ employment_df = pd.read_csv("Loan_Risk_Assessment/employmentlength.csv")
 merged_df = customer_df.merge(loan_df, on='loan_id', how='inner')
 merged_df = merged_df.merge(loan_reason_df, left_on='reason_code', right_on='reasoncode', how='left')
 merged_df = merged_df.merge(employment_df, left_on='emp_length', right_on='emp_length', how='left')
+merged_df = merged_df.merge(loan_status_df, left_on='loan_status_code_y', right_on='loan_status_code', how='left')
 
 # Streamlit App Title
 st.title("📊 Loan Data Dashboard")
@@ -35,6 +36,13 @@ st.subheader("Loan Amount by Loan Reason")
 loan_reason_fig = px.bar(merged_df.groupby('reason')['loan_amnt'].mean().reset_index(), x='reason', y='loan_amnt',
                          title="Average Loan Amount by Reason", labels={'loan_amnt': 'Avg Loan Amount ($)'})
 st.plotly_chart(loan_reason_fig)
+
+# Delinquency Analysis
+st.subheader("Delinquency Analysis")
+delinquency_counts = merged_df[merged_df['loan_status'].isin(['Late (31-120 days)', 'Late (16-30 days)'])]
+delinquency_fig = px.bar(delinquency_counts.groupby('loan_status').size().reset_index(), x='loan_status', y=0,
+                         title="Delinquency Status Counts", labels={'0': 'Number of Loans'})
+st.plotly_chart(delinquency_fig)
 
 # Loan Amount by Employment Length
 st.subheader("Loan Amount by Employment Length")
