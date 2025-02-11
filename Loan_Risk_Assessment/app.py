@@ -6,11 +6,11 @@ from streamlit_folium import folium_static
 import json
 
 # Load datasets
-customer_df = pd.read_csv("customerdata.csv")
-loan_df = pd.read_csv("loandata.csv")
-loan_reason_df = pd.read_csv("loanreason.csv")
-loan_status_df = pd.read_csv("loanstatus.csv")
-employment_df = pd.read_csv("employmentlength.csv")
+customer_df = pd.read_csv("Loan_Risk_Assessment/customerdata.csv")
+loan_df = pd.read_csv("Loan_Risk_Assessment/loandata.csv")
+loan_reason_df = pd.read_csv("Loan_Risk_Assessment/loanreason.csv")
+loan_status_df = pd.read_csv("Loan_Risk_Assessment/loanstatus.csv")
+employment_df = pd.read_csv("Loan_Risk_Assessment/employmentlength.csv")
 
 # Merge necessary dataframes
 merged_df = customer_df.merge(loan_df, on='loan_id', how='inner')
