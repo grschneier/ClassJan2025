@@ -31,16 +31,16 @@ merged_df['issue_date'] = pd.to_datetime(merged_df['issue_date'], errors='coerce
 merged_df = merged_df.dropna(subset=['issue_date'])
 
 # Extract min and max years safely
-if not merged_df.empty:
-    min_year = int(merged_df['issue_date'].dt.year.min())  # Convert to int to avoid float/NaN issues
+if not merged_df.empty and merged_df['issue_date'].dt.year.notna().any():
+    min_year = int(merged_df['issue_date'].dt.year.min())  # Convert to int
     max_year = int(merged_df['issue_date'].dt.year.max())
 else:
-    min_year = 2000  # Set a default range if data is missing
-    max_year = 2025
+    min_year, max_year = 2000, 2025  # Default range if no valid dates exist
 
-# Ensure min_year and max_year are valid before passing to Streamlit slider
+# Log the values for debugging
 st.sidebar.write(f"Date Range: {min_year} - {max_year}")
 
+# Ensure min_year and max_year are valid integers
 from_year, to_year = st.sidebar.slider(
     "Select Date Range",
     min_value=min_year,
@@ -48,9 +48,6 @@ from_year, to_year = st.sidebar.slider(
     value=[min_year, max_year]
 )
 
-# Now safely extract min and max years
-min_year = merged_df['issue_date'].dt.year.min()
-max_year = merged_df['issue_date'].dt.year.max()
 # Streamlit App Title
 st.title("📊 Loan Data Dashboard")
 
