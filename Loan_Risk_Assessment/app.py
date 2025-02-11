@@ -24,10 +24,41 @@ merged_df = merged_df.loc[:, ~merged_df.columns.duplicated()]
 # Remove faulty employment length values over 50
 merged_df = merged_df[merged_df['emp_length'] <= 50]
 
+import datetime
+
 # Ensure issue_date is a datetime column
 merged_df['issue_date'] = pd.to_datetime(merged_df['issue_date'], errors='coerce')
 merged_df = merged_df.dropna(subset=['issue_date'])
 
+# Convert issue_date to YYYYMM format (integer)
+merged_df['issue_month'] = merged_df['issue_date'].dt.year * 100 + merged_df['issue_date'].dt.month
+
+# Extract min and max month values as integers
+if not merged_df.empty:
+    min_month = merged_df['issue_month'].min()
+    max_month = merged_df['issue_month'].max()
+else:
+    min_month, max_month = 201701, 202512  # Default range
+
+# Sidebar Filters
+st.sidebar.header("Filters")
+selected_months = st.sidebar.slider(
+    "Select Date Range (YYYYMM)",
+    min_value=min_month,
+    max_value=max_month,
+    value=(min_month, max_month),
+    step=1
+)
+
+# Convert selected YYYYMM back to datetime
+selected_start_date = datetime.datetime.strptime(str(selected_months[0]), "%Y%m")
+selected_end_date = datetime.datetime.strptime(str(selected_months[1]), "%Y%m")
+
+# Filter DataFrame
+filtered_df = merged_df[
+    (merged_df['issue_date'] >= selected_start_date) &
+    (merged_df['issue_date'] <= selected_end_date)
+]
 # Extract min and max months
 if not merged_df.empty and merged_df['issue_date'].notna().any():
     min_month = merged_df['issue_date'].min().strftime('%Y-%m')
