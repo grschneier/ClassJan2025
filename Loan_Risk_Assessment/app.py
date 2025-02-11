@@ -24,6 +24,15 @@ merged_df = merged_df.loc[:, ~merged_df.columns.duplicated()]
 # Remove faulty employment length values over 50
 merged_df = merged_df[merged_df['emp_length'] <= 50]
 
+# Ensure issue_date is a datetime column before using .dt accessor
+merged_df['issue_date'] = pd.to_datetime(merged_df['issue_date'], errors='coerce')
+
+# Drop rows where issue_date is still NaT (invalid dates)
+merged_df = merged_df.dropna(subset=['issue_date'])
+
+# Now safely extract min and max years
+min_year = merged_df['issue_date'].dt.year.min()
+max_year = merged_df['issue_date'].dt.year.max()
 # Streamlit App Title
 st.title("📊 Loan Data Dashboard")
 
