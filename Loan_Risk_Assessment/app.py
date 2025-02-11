@@ -4,6 +4,7 @@ import plotly.express as px
 import folium
 from streamlit_folium import folium_static
 import json
+import datetime
 
 # Load datasets
 customer_df = pd.read_csv("Loan_Risk_Assessment/customerdata.csv")
@@ -30,18 +31,20 @@ import datetime
 merged_df['issue_date'] = pd.to_datetime(merged_df['issue_date'], errors='coerce')
 merged_df = merged_df.dropna(subset=['issue_date'])
 
-# Convert issue_date to YYYYMM format (integer)
+# Convert issue_date to YYYYMM integer format
 merged_df['issue_month'] = merged_df['issue_date'].dt.year * 100 + merged_df['issue_date'].dt.month
 
-# Extract min and max month values as integers
+# Extract min and max month values
 if not merged_df.empty:
-    min_month = merged_df['issue_month'].min()
-    max_month = merged_df['issue_month'].max()
+    min_month = int(merged_df['issue_month'].min())  # Ensure integer format
+    max_month = int(merged_df['issue_month'].max())
 else:
     min_month, max_month = 201701, 202512  # Default range
 
 # Sidebar Filters
 st.sidebar.header("Filters")
+
+# Slider for month range (YYYYMM)
 selected_months = st.sidebar.slider(
     "Select Date Range (YYYYMM)",
     min_value=min_month,
@@ -54,11 +57,12 @@ selected_months = st.sidebar.slider(
 selected_start_date = datetime.datetime.strptime(str(selected_months[0]), "%Y%m")
 selected_end_date = datetime.datetime.strptime(str(selected_months[1]), "%Y%m")
 
-# Filter DataFrame
+# Filter DataFrame based on selected date range
 filtered_df = merged_df[
     (merged_df['issue_date'] >= selected_start_date) &
     (merged_df['issue_date'] <= selected_end_date)
 ]
+
 # Extract min and max months
 if not merged_df.empty and merged_df['issue_date'].notna().any():
     min_month = merged_df['issue_date'].min().strftime('%Y-%m')
