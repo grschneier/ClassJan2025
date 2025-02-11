@@ -27,8 +27,26 @@ merged_df = merged_df[merged_df['emp_length'] <= 50]
 # Ensure issue_date is a datetime column before using .dt accessor
 merged_df['issue_date'] = pd.to_datetime(merged_df['issue_date'], errors='coerce')
 
-# Drop rows where issue_date is still NaT (invalid dates)
+# Drop rows where issue_date is NaT (invalid dates)
 merged_df = merged_df.dropna(subset=['issue_date'])
+
+# Extract min and max years safely
+if not merged_df.empty:
+    min_year = int(merged_df['issue_date'].dt.year.min())  # Convert to int to avoid float/NaN issues
+    max_year = int(merged_df['issue_date'].dt.year.max())
+else:
+    min_year = 2000  # Set a default range if data is missing
+    max_year = 2025
+
+# Ensure min_year and max_year are valid before passing to Streamlit slider
+st.sidebar.write(f"Date Range: {min_year} - {max_year}")
+
+from_year, to_year = st.sidebar.slider(
+    "Select Date Range",
+    min_value=min_year,
+    max_value=max_year,
+    value=[min_year, max_year]
+)
 
 # Now safely extract min and max years
 min_year = merged_df['issue_date'].dt.year.min()
