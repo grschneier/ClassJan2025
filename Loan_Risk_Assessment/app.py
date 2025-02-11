@@ -24,50 +24,36 @@ merged_df = merged_df.loc[:, ~merged_df.columns.duplicated()]
 # Remove faulty employment length values over 50
 merged_df = merged_df[merged_df['emp_length'] <= 50]
 
-# Ensure issue_date is a datetime column before using .dt accessor
+# Ensure issue_date is a datetime column
 merged_df['issue_date'] = pd.to_datetime(merged_df['issue_date'], errors='coerce')
-
-# Drop rows where issue_date is NaT (invalid dates)
 merged_df = merged_df.dropna(subset=['issue_date'])
 
-# Extract min and max years safely
-if not merged_df.empty and merged_df['issue_date'].dt.year.notna().any():
-    min_year = int(merged_df['issue_date'].dt.year.min())  # Convert to int
-    max_year = int(merged_df['issue_date'].dt.year.max())
+# Extract min and max months
+if not merged_df.empty and merged_df['issue_date'].notna().any():
+    min_month = merged_df['issue_date'].min().strftime('%Y-%m')
+    max_month = merged_df['issue_date'].max().strftime('%Y-%m')
 else:
-    min_year, max_year = 2000, 2025  # Default range if no valid dates exist
+    min_month, max_month = "2017-01", "2025-12"  # Default range
 
-# Log the values for debugging
-st.sidebar.write(f"Date Range: {min_year} - {max_year}")
-
-# Ensure min_year and max_year are valid integers
-from_year, to_year = st.sidebar.slider(
-    "Select Date Range",
-    min_value=min_year,
-    max_value=max_year,
-    value=[min_year, max_year]
-)
-
-# Streamlit App Title
-st.title("📊 Loan Data Dashboard")
-
-# Filters: Date Slider & Loan Type
+# Sidebar Filters
 st.sidebar.header("Filters")
-min_year = merged_df['issue_date'].dt.year.min()
-max_year = merged_df['issue_date'].dt.year.max()
-from_year, to_year = st.sidebar.slider("Select Date Range", min_value=min_year, max_value=max_year, value=[min_year, max_year])
+selected_months = st.sidebar.slider("Select Date Range", min_value=min_month, max_value=max_month, value=(min_month, max_month))
 
 loan_types = merged_df['reason'].unique()
 selected_loans = st.sidebar.multiselect("Select Loan Type(s)", loan_types, default=loan_types.tolist())
 
 # Apply filters
-filtered_df = merged_df[(merged_df['issue_date'].dt.year >= from_year) & (merged_df['issue_date'].dt.year <= to_year) & (merged_df['reason'].isin(selected_loans))]
+filtered_df = merged_df[
+    (merged_df['issue_date'] >= pd.to_datetime(selected_months[0])) &
+    (merged_df['issue_date'] <= pd.to_datetime(selected_months[1])) &
+    (merged_df['reason'].isin(selected_loans))
+]
 
 # Loan Distribution Over Time
 st.subheader("Loan Distribution Over Time")
 time_series = filtered_df.groupby(filtered_df['issue_date'].dt.to_period('M')).size().reset_index()
 time_series.columns = ['Month', 'Number of Loans']
-time_series['Month'] = time_series['Month'].astype(str)  # Convert to string for plotting
+time_series['Month'] = time_series['Month'].astype(str)
 fig1 = px.line(time_series, x='Month', y='Number of Loans', title='Loans Issued Over Time')
 st.plotly_chart(fig1)
 
