@@ -27,11 +27,21 @@ merged_df = merged_df[merged_df['emp_length'] <= 50]
 # Streamlit App Title
 st.title("📊 Loan Data Dashboard")
 
+# Filters: Date Slider & Loan Type
+st.sidebar.header("Filters")
+min_year = merged_df['issue_date'].dt.year.min()
+max_year = merged_df['issue_date'].dt.year.max()
+from_year, to_year = st.sidebar.slider("Select Date Range", min_value=min_year, max_value=max_year, value=[min_year, max_year])
+
+loan_types = merged_df['reason'].unique()
+selected_loans = st.sidebar.multiselect("Select Loan Type(s)", loan_types, default=loan_types.tolist())
+
+# Apply filters
+filtered_df = merged_df[(merged_df['issue_date'].dt.year >= from_year) & (merged_df['issue_date'].dt.year <= to_year) & (merged_df['reason'].isin(selected_loans))]
+
 # Loan Distribution Over Time
 st.subheader("Loan Distribution Over Time")
-merged_df['issue_date'] = pd.to_datetime(merged_df['issue_date'], errors='coerce')
-merged_df = merged_df.dropna(subset=['issue_date'])  # Drop rows with invalid dates
-time_series = merged_df.groupby(merged_df['issue_date'].dt.to_period('M')).size().reset_index()
+time_series = filtered_df.groupby(filtered_df['issue_date'].dt.to_period('M')).size().reset_index()
 time_series.columns = ['Month', 'Number of Loans']
 time_series['Month'] = time_series['Month'].astype(str)  # Convert to string for plotting
 fig1 = px.line(time_series, x='Month', y='Number of Loans', title='Loans Issued Over Time')
@@ -39,28 +49,33 @@ st.plotly_chart(fig1)
 
 # Loan Amount by Reason
 st.subheader("Loan Amount by Loan Reason")
-loan_reason_fig = px.bar(merged_df.groupby('reason')['loan_amnt'].mean().reset_index(), x='reason', y='loan_amnt',
+loan_reason_fig = px.bar(filtered_df.groupby('reason')['loan_amnt'].mean().reset_index(), x='reason', y='loan_amnt',
                          title="Average Loan Amount by Reason", labels={'loan_amnt': 'Avg Loan Amount ($)'})
 st.plotly_chart(loan_reason_fig)
 
-# Delinquency Analysis
-st.subheader("Delinquency Analysis")
-delinquency_counts = merged_df[merged_df['loan_status'].isin(['Late (31-120 days)', 'Late (16-30 days)'])]
-delinquency_fig = px.bar(delinquency_counts.groupby('loan_status').size().reset_index(), x='loan_status', y=0,
-                         title="Delinquency Status Counts", labels={'0': 'Number of Loans'})
-st.plotly_chart(delinquency_fig)
+# Delinquency KPIs
+st.subheader("Delinquency Metrics")
+delinquency_counts = filtered_df[filtered_df['loan_status'].isin(['Late (31-120 days)', 'Late (16-30 days)'])]
+cols = st.columns(2)
+
+late_30_60 = delinquency_counts[delinquency_counts['loan_status'] == 'Late (16-30 days)'].shape[0]
+late_60_120 = delinquency_counts[delinquency_counts['loan_status'] == 'Late (31-120 days)'].shape[0]
+
+cols[0].metric("Late (16-30 days) Loans", f"{late_30_60}")
+cols[1].metric("Late (31-120 days) Loans", f"{late_60_120}")
 
 # Loan Amount by Employment Length
 st.subheader("Loan Amount by Employment Length")
-emp_length_fig = px.box(merged_df.dropna(subset=['emp_length', 'loan_amnt']), 
-                        x='emp_length', 
-                        y='loan_amnt',
-                        title="Loan Amount Distribution by Employment Length")
-st.plotly_chart(emp_length_fig)
+if 'emp_length' in filtered_df.columns and 'loan_amnt' in filtered_df.columns:
+    emp_length_fig = px.box(filtered_df.dropna(subset=['emp_length', 'loan_amnt']), x='emp_length', y='loan_amnt',
+                            title="Loan Amount Distribution by Employment Length")
+    st.plotly_chart(emp_length_fig)
+else:
+    st.warning("Employment length or loan amount data is missing.")
 
 # State-wise Loan Amount Map
 st.subheader("State-wise Loan Amount Map")
-state_loan_data = merged_df.groupby('addr_state', as_index=False)['loan_amnt'].sum()
+state_loan_data = filtered_df.groupby('addr_state', as_index=False)['loan_amnt'].sum()
 
 # Load GeoJSON file
 geojson_path = "Loan_Risk_Assessment/us-states.json"
@@ -83,4 +98,4 @@ folium_static(m)
 
 # Filter and Explore Data
 st.subheader("Explore Loan Data")
-st.dataframe(merged_df)
+st.dataframe(filtered_df)
