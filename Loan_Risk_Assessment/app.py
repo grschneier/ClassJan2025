@@ -11,14 +11,11 @@ loan_df = pd.read_csv("Loan_Risk_Assessment/loandata.csv")
 loan_reason_df = pd.read_csv("Loan_Risk_Assessment/loanreason.csv")
 loan_status_df = pd.read_csv("Loan_Risk_Assessment/loanstatus.csv")
 employment_df = pd.read_csv("Loan_Risk_Assessment/employmentlength.csv")
-if 'loan_status_code' in loan_df.columns and 'loan_status_code' in loan_status_df.columns:
-    merged_df = loan_df.merge(loan_status_df, on='loan_status_code', how='left')
-else:
-    st.error("Column 'loan_status_code' not found in one or both datasets.")
+
 # Merge necessary dataframes
 merged_df = customer_df.merge(loan_df, on='loan_id', how='inner')
 merged_df = merged_df.merge(loan_reason_df, left_on='reason_code', right_on='reasoncode', how='left')
-merged_df = merged_df.merge(loan_status_df, left_on='loan_status_code', right_on='loan_status_code', how='left')
+# merged_df = merged_df.merge(loan_status_df, left_on='loan_status_code', right_on='loan_status_code', how='left')
 merged_df = merged_df.merge(employment_df, left_on='emp_length_code', right_on='emp_length_code', how='left')
 
 # Streamlit App Title
@@ -39,11 +36,11 @@ loan_reason_fig = px.bar(merged_df.groupby('reason')['loan_amnt'].mean().reset_i
 st.plotly_chart(loan_reason_fig)
 
 # Delinquency Analysis
-st.subheader("Delinquency Analysis")
-delinquency_counts = merged_df[merged_df['loan_status'].isin(['Late (31-120 days)', 'Late (16-30 days)'])]
-delinquency_fig = px.bar(delinquency_counts.groupby('loan_status').size().reset_index(), x='loan_status', y=0,
-                         title="Delinquency Status Counts", labels={'0': 'Number of Loans'})
-st.plotly_chart(delinquency_fig)
+# st.subheader("Delinquency Analysis")
+# delinquency_counts = merged_df[merged_df['loan_status'].isin(['Late (31-120 days)', 'Late (16-30 days)'])]
+# delinquency_fig = px.bar(delinquency_counts.groupby('loan_status').size().reset_index(), x='loan_status', y=0,
+#                         title="Delinquency Status Counts", labels={'0': 'Number of Loans'})
+# st.plotly_chart(delinquency_fig)
 
 # Loan Amount by Employment Length
 st.subheader("Loan Amount by Employment Length")
