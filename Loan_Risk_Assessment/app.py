@@ -12,11 +12,14 @@ loan_reason_df = pd.read_csv("Loan_Risk_Assessment/loanreason.csv")
 loan_status_df = pd.read_csv("Loan_Risk_Assessment/loanstatus.csv")
 employment_df = pd.read_csv("Loan_Risk_Assessment/employmentlength.csv")
 
-# Merge necessary dataframes
+# Merge necessary dataframes, avoiding duplicate columns
 merged_df = customer_df.merge(loan_df, on='loan_id', how='inner')
-merged_df = merged_df.merge(loan_reason_df, left_on='reason_code', right_on='reasoncode', how='left')
-merged_df = merged_df.merge(employment_df, left_on='emp_length', right_on='emp_length', how='left')
+merged_df = merged_df.merge(loan_reason_df.rename(columns={'reasoncode': 'reason_code'}), on='reason_code', how='left')
+merged_df = merged_df.merge(employment_df, on='emp_length', how='left')
 merged_df = merged_df.merge(loan_status_df, left_on='loan_status_code_y', right_on='loan_status_code', how='left')
+
+# Drop duplicate columns if they exist
+merged_df = merged_df.loc[:, ~merged_df.columns.duplicated()]
 
 # Streamlit App Title
 st.title("📊 Loan Data Dashboard")
